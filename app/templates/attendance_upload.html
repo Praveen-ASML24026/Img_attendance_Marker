@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Take Attendance — Classroom Photo Upload{% endblock %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto py-6">
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-white">
+            Classroom Face Recognition
+        </h1>
+        <p class="text-slate-400 mt-2">
+            Upload classroom photographs to automatically detect and recognize students.
+        </p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800">
+            <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">Total Registered</span>
+            <p class="text-2xl font-bold text-white mt-1">{{ total_students }}</p>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800">
+            <span class="text-xs text-emerald-400 font-medium uppercase tracking-wider">Biometrically Enrolled</span>
+            <p class="text-2xl font-bold text-emerald-400 mt-1">{{ enrolled_count }}</p>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800">
+            <span class="text-xs text-amber-400 font-medium uppercase tracking-wider">Pending Enrollment</span>
+            <p class="text-2xl font-bold text-amber-400 mt-1">{{ total_students - enrolled_count }}</p>
+        </div>
+    </div>
+
+    {% if enrolled_count == 0 %}
+    <div class="p-6 rounded-2xl bg-amber-950/40 border border-amber-900/50 mb-8">
+        <h3 class="font-bold text-amber-300">No Biometrically Enrolled Students Found</h3>
+        <p class="text-sm text-slate-300 mt-1">
+            Before taking attendance, at least one student must have their facial biometrics enrolled.
+        </p>
+        <a href="{{ url_for('students.list_students') }}"
+           class="inline-block mt-4 bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 rounded-xl text-sm transition">
+            Go to Student Management &rarr;
+        </a>
+    </div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data" class="space-y-6" id="uploadForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+        <!-- Attendance Date & Threshold -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+            <h2 class="text-xl font-bold text-white">Session Configuration</h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Attendance Date</label>
+                    <input type="date" name="session_date" value="{{ today_date }}" required
+                           class="w-full p-3.5 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-blue-500 transition">
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-medium text-slate-200">Matching Threshold</label>
+                        <span class="text-xs font-mono text-blue-400" id="thresholdValue">0.50</span>
+                    </div>
+                    <input type="range" name="threshold" min="0.30" max="0.75" step="0.05" value="0.50"
+                           oninput="document.getElementById('thresholdValue').innerText = parseFloat(this.value).toFixed(2)"
+                           class="w-full accent-blue-600 cursor-pointer">
+                    <p class="text-xs text-slate-500 mt-1">
+                        Recommended: 0.50. Higher values reduce false positives; lower values help with low-light/angled faces.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multi-Photo Uploads -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+            <div>
+                <h2 class="text-xl font-bold text-white">Classroom Photographs (1 to 3 Angles)</h2>
+                <p class="text-sm text-slate-400 mt-1">
+                    Upload up to 3 photos (e.g. Center, Left wing, Right wing) to ensure all 60 students are covered. Tiling will automatically scan back-row students.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Photo 1 -->
+                <div class="p-5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-medium text-sm text-slate-200">Photo 1 (Center)</label>
+                        <span class="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Required</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">Main view of the classroom</p>
+                    <input type="file" name="photo_1" accept="image/jpeg,image/png,image/webp" required
+                           class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
+                </div>
+
+                <!-- Photo 2 -->
+                <div class="p-5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-medium text-sm text-slate-200">Photo 2 (Left Side)</label>
+                        <span class="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Optional</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">Covers students on the left</p>
+                    <input type="file" name="photo_2" accept="image/jpeg,image/png,image/webp"
+                           class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer">
+                </div>
+
+                <!-- Photo 3 -->
+                <div class="p-5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-medium text-sm text-slate-200">Photo 3 (Right Side)</label>
+                        <span class="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Optional</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">Covers students on the right</p>
+                    <input type="file" name="photo_3" accept="image/jpeg,image/png,image/webp"
+                           class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer">
+                </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-blue-950/30 border border-blue-900/40 text-xs text-slate-300 flex items-start gap-3">
+                <svg class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p>
+                    <strong>Tiling Engine Active:</strong> Each photo will be processed through high-resolution quadrant tiles to detect students in back rows. Students appearing in multiple photos will be deduplicated automatically.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4 pt-2">
+            <button type="submit" id="processBtn"
+                    class="w-full sm:flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 px-6 rounded-xl transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Scan & Recognize Faces
+            </button>
+
+            <a href="{{ url_for('students.list_students') }}"
+               class="sm:w-auto text-center px-6 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition">
+                Cancel
+            </a>
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+    document.getElementById('uploadForm').addEventListener('submit', function() {
+        const btn = document.getElementById('processBtn');
+        btn.disabled = true;
+        btn.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Scanning Classroom Photos & Applying Tiling...
+        `;
+    });
+</script>
+
+{% endblock %}
+

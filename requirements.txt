@@ -1,0 +1,12 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Flask-WTF
+python-dotenv
+cryptography
+numpy
+opencv-python
+onnxruntime
+insightface
+gspread
+google-auth

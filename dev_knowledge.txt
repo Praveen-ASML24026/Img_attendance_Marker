@@ -1,0 +1,74 @@
+----------------------------------------------------------------------------------------------------
+TIMESTAMP: 2026-11-04 13:08:50 IST
+ACTION: Generated project description and complete README.md documentation
+
+CHANGES MADE:
+1. Created `README.md` in the root repository with:
+   - High-level overview and problem statement for automated biometric classroom attendance.
+   - Comprehensive breakdown of all core modules:
+     * Biometric Enrollment Pipeline (multi-angle photo & 5s video keyframe sampling, sharpness and pose classification, zero-retention raw image policy).
+     * High-density Classroom Recognition (SCRFD detector, ArcFace 512-D embeddings, quadrant tiling for small faces in high-res images, NMS IoU deduplication).
+     * Teacher-in-the-loop review workflow with manual status overrides and historical audit logs.
+     * Google Sheets API synchronization (auto-date headers, batch updates, non-downgrade rule).
+     * Security hardening (Fernet AES-128 biometric vector encryption, CSRF protection, SQLite WAL concurrency, Docker deployment).
+   - System architecture diagram (Mermaid flow).
+   - Full technology stack table.
+   - Project directory structure map.
+   - Step-by-step local setup, environment configuration (.env), and CLI teacher creation commands.
+   - Docker & Docker Compose deployment instructions.
+   - Test suite verification summary covering all 8 development phases.
+
+ISSUES / ERRORS:
+- None detected. Verified file system structure, test runner configuration, and application factory setup.
+----------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------
+TIMESTAMP: 2026-11-04 13:12:00 IST
+ACTION: Technical advisory on Google Sheets API pricing and quota feasibility
+
+NOTES / FINDINGS:
+1. Google Sheets API (v4) & Google Drive API are 100% free of charge.
+2. Free Tier Limits & Quotas:
+   - 300 read requests per minute per project (60 per minute per user).
+   - 300 write requests per minute per project (60 per minute per user).
+   - Unlimited daily requests within the per-minute quota.
+3. System Architecture Efficiency:
+   - The sync engine in `app/google_sheets/sync.py` uses batch updating (`batch_update`), consuming only 1-2 API calls per attendance session.
+4. Billing Requirements:
+   - No Google Cloud billing account or credit card is required to create a Service Account and use the Sheets API.
+
+ISSUES / ERRORS:
+- None.
+----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+TIMESTAMP: 2026-11-04 13:28:30 IST
+ACTION: Updated .gitignore with comprehensive exclusion rules for unwanted files
+
+CHANGES MADE:
+1. Replaced minimal .gitignore with a production-grade ruleset across 10 categories:
+   - Test Media & Biometrics: Explicitly excluded `prav-face.mp4` along with `*.mp4`, `*.avi`, `*.mov`, `*.mkv`.
+   - Secrets & Credentials: Excluded `.env*`, `credentials.json`, `*service_account*.json`, `*.pem`, `*.key`.
+   - Databases & Concurrency Logs: Excluded `instance/`, `*.db`, `*.sqlite`, `*.sqlite3`, `*.db-shm`, `*.db-wal`.
+   - Model Weights: Excluded `models/` directory, `*.onnx`, `*.pth`, `*.weights`, `*.bin`.
+   - Temporary Directories: Excluded `uploads/`, `instance/tmp/`, `tmp/`, `temp/`.
+   - Python & Virtual Envs: Excluded `venv/`, `.venv/`, `env/`, `__pycache__/`, `*.py[cod]`, and packaging artifacts.
+   - Developer Tooling & OS: Excluded `.vscode/`, `.idea/`, `*.swp`, `Thumbs.db`, `desktop.ini`, `.DS_Store`.
+   - Test Caches & Logs: Excluded `.pytest_cache/`, `.coverage`, `htmlcov/`, `*.log`, `logs/`.
+   - Docker: Excluded local override files (`docker-compose.override.yml`).
+
+ISSUES / ERRORS:
+- None.
+----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+TIMESTAMP: 2026-11-04 13:32:45 IST
+ACTION: Initialized Git repository, staged production codebase, and linked remote GitHub repository
+
+CHANGES MADE:
+1. Initialized empty Git repository on main branch (`git init`, `git branch -M main`).
+2. Configured remote origin to `https://github.com/Praveen-ASML24026/Img_attendance_Marker.git`.
+3. Verified `.gitignore` enforcement: verified exclusion of `.env`, `instance/`, `models/` weights, and `prav-face.mp4`.
+4. Staged all core codebase files, test suites, Docker configs, and documentation for initial commit.
+
+ISSUES / ERRORS:
+- None.
+----------------------------------------------------------------------------------------------------

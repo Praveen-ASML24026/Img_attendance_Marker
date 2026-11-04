@@ -1,0 +1,32 @@
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-attendance_user}:${POSTGRES_PASSWORD:-attendance_pass}@db:5432/${POSTGRES_DB:-attendance_db}
+      - GOOGLE_SERVICE_ACCOUNT_JSON=${GOOGLE_SERVICE_ACCOUNT_JSON}
+      - GOOGLE_SHEET_ID=${GOOGLE_SHEET_ID}
+    volumes:
+      - instance_data:/app/instance
+      - ./models:/app/models
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-attendance_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-attendance_pass}
+      - POSTGRES_DB=${POSTGRES_DB:-attendance_db}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  instance_data:
+

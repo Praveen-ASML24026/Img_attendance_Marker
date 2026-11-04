@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Review Attendance — {{ session.session_date.strftime('%d-%m-%Y') }}{% endblock %}
+
+{% block content %}
+
+<div class="max-w-6xl mx-auto py-6">
+
+    <!-- Header & Summary -->
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+            <a href="{{ url_for('attendance.upload_classroom') }}" class="text-slate-400 hover:text-white text-sm">
+                &larr; New Session
+            </a>
+            <span class="text-slate-600">/</span>
+            <span class="text-sm text-blue-400">Attendance Review</span>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-white">
+                    Attendance Review
+                </h1>
+                <p class="text-slate-400 mt-1">
+                    Date: <span class="text-white font-medium">{{ session.session_date.strftime('%d %B %Y') }}</span>
+                    &bull; Session #{{ session.id }}
+                </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                {% if session.is_submitted %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        Confirmed & Submitted
+                    </span>
+                    {% if session.synced_at %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        Sheets: Synced
+                    </span>
+                    {% endif %}
+                {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse">
+                        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                        Pending Teacher Review & Confirmation
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Metrics Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800">
+            <span class="text-xs text-slate-400 uppercase tracking-wider font-medium">Total Detections</span>
+            <p class="text-2xl font-bold text-white mt-1">{{ session.total_detected }}</p>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800">
+            <span class="text-xs text-emerald-400 uppercase tracking-wider font-medium">Present (Marked)</span>
+            <p class="text-2xl font-bold text-emerald-400 mt-1">{{ present_count }}</p>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800">
+            <span class="text-xs text-red-400 uppercase tracking-wider font-medium">Absent</span>
+            <p class="text-2xl font-bold text-red-400 mt-1">{{ absent_count }}</p>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800">
+            <span class="text-xs text-amber-400 uppercase tracking-wider font-medium">Unknown Faces</span>
+            <p class="text-2xl font-bold text-amber-400 mt-1">{{ unknown_faces|length }}</p>
+        </div>
+    </div>
+
+    <!-- Unknown Faces Section (if any detected) -->
+    {% if unknown_faces %}
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 mb-8 space-y-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-400 text-xs">Action Required</span>
+                    Unknown Faces Detected ({{ unknown_faces|length }})
+                </h2>
+                <p class="text-xs text-slate-400 mt-1">
+                    These detected faces did not match any enrolled student above the similarity threshold.
+                </p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4 pt-2">
+            {% for unk in unknown_faces %}
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-center">
+                {% if unk.thumbnail_base64 %}
+                <img src="data:image/jpeg;base64,{{ unk.thumbnail_base64 }}"
+                     alt="Unknown Face"
+                     class="w-20 h-20 rounded-lg mx-auto object-cover border border-slate-700 mb-2">
+                {% else %}
+                <div class="w-20 h-20 rounded-lg mx-auto bg-slate-800 flex items-center justify-center text-xs text-slate-500 mb-2">
+                    No Crop
+                </div>
+                {% endif %}
+                <span class="text-xs font-mono text-slate-400 block">{{ unk.unknown_id }}</span>
+                <span class="text-[10px] text-amber-400 block mt-0.5">Score: {{ (unk.best_similarity * 100)|round(1) }}%</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Student Attendance Records Table -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden mb-8">
+        <div class="p-5 border-b border-slate-800 flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-white">
+                Student Attendance Roster
+            </h2>
+            <span class="text-xs text-slate-400">
+                Click status button to correct any mistaken classification
+            </span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-950/60 text-slate-400 text-xs uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4">Student ID</th>
+                        <th class="px-6 py-4">Student Name</th>
+                        <th class="px-6 py-4">Recognition Status</th>
+                        <th class="px-6 py-4">Confidence</th>
+                        <th class="px-6 py-4 text-center">Attendance</th>
+                        {% if not session.is_submitted %}
+                        <th class="px-6 py-4 text-center">Teacher Correction</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-slate-800">
+                    {% for rec in records %}
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="px-6 py-4 font-mono text-sm text-slate-300">
+                            {{ rec.student.student_id }}
+                        </td>
+
+                        <td class="px-6 py-4 font-medium text-white">
+                            {{ rec.student.name }}
+                            {% if rec.is_manually_corrected %}
+                            <span class="ml-2 inline-block px-2 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                Teacher Corrected
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-6 py-4 text-xs">
+                            {% if rec.confidence is not none %}
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 font-medium">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                    Recognized (Face Match)
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 font-medium">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                                    Not Detected
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-6 py-4 font-mono text-xs text-slate-300">
+                            {% if rec.confidence is not none %}
+                                <span class="text-emerald-400 font-semibold">{{ (rec.confidence * 100)|round(1) }}%</span>
+                            {% else %}
+                                <span class="text-slate-500">—</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-6 py-4 text-center">
+                            {% if rec.status == 'P' %}
+                                <span class="inline-block px-3 py-1 rounded-lg text-xs font-bold bg-emerald-600 text-white">
+                                    Present
+                                </span>
+                            {% else %}
+                                <span class="inline-block px-3 py-1 rounded-lg text-xs font-bold bg-red-900/60 text-red-300 border border-red-800/60">
+                                    Absent
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        {% if not session.is_submitted %}
+                        <td class="px-6 py-4 text-center">
+                            <form method="POST" class="inline-block">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <input type="hidden" name="action" value="update_status">
+                                <input type="hidden" name="record_id" value="{{ rec.id }}">
+                                {% if rec.status == 'P' %}
+                                    <input type="hidden" name="status" value="A">
+                                    <button type="submit"
+                                            class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-red-900/40 text-slate-300 hover:text-red-300 border border-slate-700 transition">
+                                        Mark Absent
+                                    </button>
+                                {% else %}
+                                    <input type="hidden" name="status" value="P">
+                                    <button type="submit"
+                                            class="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition">
+                                        Mark Present
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Final Submission Banner -->
+    {% if not session.is_submitted %}
+    <div class="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-800/60 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-center gap-6">
+        <div>
+            <h3 class="text-xl font-bold text-white">Confirm & Submit Attendance</h3>
+            <p class="text-sm text-slate-300 mt-1">
+                Once confirmed by the teacher, this session will be finalized and automatically synchronized with Google Sheets.
+            </p>
+        </div>
+
+        <form method="POST" class="w-full sm:w-auto">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="action" value="confirm_session">
+            <button type="submit"
+                    class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-4 px-8 rounded-xl transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Confirm Attendance ({{ present_count }} Present)
+            </button>
+        </form>
+    </div>
+    {% else %}
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                <h3 class="font-semibold text-white">Session Confirmed on {{ session.session_date.strftime('%d-%m-%Y') }}</h3>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">
+                Status: <span class="text-slate-300">{{ session.sync_status or 'Saved locally' }}</span>
+                {% if session.synced_at %}
+                &bull; Synced at {{ session.synced_at.strftime('%H:%M:%S') }}
+                {% endif %}
+            </p>
+        </div>
+
+        {% if sheets_configured %}
+        <form method="POST" action="{{ url_for('attendance.sync_sheets', session_id=session.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit"
+                    class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Sync with Google Sheets Now
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if not sheets_configured %}
+    <div class="mt-6 p-4 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-400 flex items-start gap-3">
+        <svg class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p>
+            <strong>Google Sheets Integration Ready:</strong> All attendance sessions are reliably preserved in your database. To enable automatic live cloud export, add your Google Service Account JSON path and Google Sheet ID in <code class="text-blue-300 font-mono">.env</code>.
+        </p>
+    </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}

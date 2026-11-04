@@ -1,0 +1,122 @@
+# ==========================================
+# Python & Bytecode
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ==========================================
+# Virtual Environments
+# ==========================================
+venv/
+env/
+ENV/
+.venv/
+
+# ==========================================
+# Environment Variables & Secrets
+# ==========================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+credentials.json
+*service_account*.json
+*service-account*.json
+google_credentials.json
+
+# ==========================================
+# Database & Instance Storage
+# ==========================================
+instance/
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# ==========================================
+# Deep Learning Models & Weights
+# ==========================================
+models/
+*.onnx
+*.pth
+*.pt
+*.weights
+*.bin
+
+# ==========================================
+# Test Media & User Uploads
+# ==========================================
+prav-face.mp4
+*.mp4
+*.avi
+*.mov
+*.mkv
+uploads/
+temp/
+tmp/
+instance/tmp/
+
+# ==========================================
+# Testing & Code Coverage
+# ==========================================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# ==========================================
+# Logs & Diagnostic Dumps
+# ==========================================
+*.log
+logs/
+
+# ==========================================
+# IDE & Editor Configurations
+# ==========================================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# ==========================================
+# Operating System Artifacts
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# ==========================================
+# Docker Local Overrides
+# ==========================================
+docker-compose.override.yml

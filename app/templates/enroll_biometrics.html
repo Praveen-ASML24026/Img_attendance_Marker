@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Biometric Enrollment — {{ student.name }}{% endblock %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto py-6">
+
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+            <a href="{{ url_for('students.list_students') }}" class="text-slate-400 hover:text-white text-sm">
+                &larr; Back to Students
+            </a>
+            <span class="text-slate-600">/</span>
+            <span class="text-sm text-blue-400">Biometric Enrollment</span>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-white">
+                    Biometric Enrollment
+                </h1>
+                <p class="text-slate-400 mt-1">
+                    Student: <span class="text-white font-medium">{{ student.name }}</span> (ID: <span class="text-white font-mono">{{ student.student_id }}</span>)
+                </p>
+            </div>
+
+            <div>
+                {% if student.is_enrolled %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        Currently Enrolled (Re-enrollment Mode)
+                    </span>
+                {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        Enrollment Pending
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if student.is_enrolled %}
+    <div class="mb-6 p-4 rounded-xl bg-blue-950/40 border border-blue-900/50 flex gap-3 text-sm text-blue-200">
+        <svg class="w-5 h-5 flex-shrink-0 text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p>
+            This student is already enrolled. Submitting this form will securely replace existing biometric embeddings with newly extracted and encrypted feature vectors.
+        </p>
+    </div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data" class="space-y-8" id="enrollmentForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+        <!-- STEP 1: Multi-Angle Facial Photographs -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+            <div>
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-600 text-xs text-white">1</span>
+                    Multi-Angle Face Photographs
+                </h2>
+                <p class="text-sm text-slate-400 mt-1">
+                    Upload clear photographs showing different head poses. Exactly one face must be visible in each photo.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                <!-- Front Angle -->
+                <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-medium text-sm text-slate-200">Front Facing</label>
+                        <span class="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Required</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">Direct eye level, neutral expression</p>
+                    <input type="file" name="photo_front" accept="image/jpeg,image/png,image/webp" required
+                           class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
+                </div>
+
+                <!-- Left Profile -->
+                <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-medium text-sm text-slate-200">Left Profile</label>
+                        <span class="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Recommended</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">Turned ~30° to the student's left</p>
+                    <input type="file" name="photo_left" accept="image/jpeg,image/png,image/webp"
+                           class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer">
+                </div>
+
+                <!-- Right Profile -->
+                <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-medium text-sm text-slate-200">Right Profile</label>
+                        <span class="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Recommended</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">Turned ~30° to the student's right</p>
+                    <input type="file" name="photo_right" accept="image/jpeg,image/png,image/webp"
+                           class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer">
+                </div>
+
+                <!-- Looking Up -->
+                <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-medium text-sm text-slate-200">Upward Angle</label>
+                        <span class="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Recommended</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">Head tilted ~15° upward</p>
+                    <input type="file" name="photo_up" accept="image/jpeg,image/png,image/webp"
+                           class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer">
+                </div>
+
+                <!-- Looking Down -->
+                <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-medium text-sm text-slate-200">Downward Angle</label>
+                        <span class="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Recommended</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">Head tilted ~15° downward</p>
+                    <input type="file" name="photo_down" accept="image/jpeg,image/png,image/webp"
+                           class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer">
+                </div>
+
+            </div>
+        </div>
+
+        <!-- STEP 2: Short Face Video -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+            <div>
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-600 text-xs text-white">2</span>
+                    Short Facial Video (Optional but Recommended)
+                </h2>
+                <p class="text-sm text-slate-400 mt-1">
+                    Upload a 3–5 second clip of the student slowly rotating their head left, right, and center. Multiple keyframes are automatically extracted and quality-filtered.
+                </p>
+            </div>
+
+            <div class="p-5 rounded-xl bg-slate-950/60 border border-slate-800">
+                <label class="block font-medium text-sm text-slate-200 mb-2">Face Video Clip (.mp4, .mov, .webm)</label>
+                <input type="file" name="face_video" accept="video/mp4,video/quicktime,video/webm,video/x-msvideo"
+                       class="w-full text-sm text-slate-400 file:mr-3 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer">
+                <p class="text-xs text-slate-500 mt-2">
+                    File size limit: up to 50 MB. Video will be processed in memory and permanently deleted immediately after embedding extraction.
+                </p>
+            </div>
+        </div>
+
+        <!-- STEP 3: Privacy Safeguards & Informed Consent -->
+        <div class="bg-blue-950/30 border border-blue-900/50 rounded-2xl p-6 sm:p-8 space-y-4">
+            <div class="flex items-center gap-2">
+                <span class="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-600 text-xs text-white">3</span>
+                <h3 class="text-lg font-bold text-white">Data Privacy & Biometric Consent</h3>
+            </div>
+
+            <div class="text-xs text-slate-300 space-y-2 leading-relaxed bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                <p>
+                    <strong>Security Safeguards:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-1 text-slate-400">
+                    <li>Only mathematical 512-dimensional numerical ArcFace embeddings are retained.</li>
+                    <li>Embeddings are encrypted at rest using AES-128-CBC / Fernet cryptography.</li>
+                    <li>Original photographs and videos are <strong>permanently deleted</strong> immediately upon feature extraction.</li>
+                    <li>No raw images are stored on disk or accessible via any web endpoint.</li>
+                </ul>
+            </div>
+
+            <label class="flex items-start gap-3 pt-2 cursor-pointer select-none">
+                <input type="checkbox" name="consent" required
+                       class="w-5 h-5 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500 mt-0.5">
+                <span class="text-sm text-slate-200 font-medium">
+                    I confirm that informed consent has been obtained from the student (or authorized parent/guardian for minors) to collect and process their facial biometric features for attendance verification.
+                </span>
+            </label>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row items-center gap-4 pt-2">
+            <button type="submit" id="submitBtn"
+                    class="w-full sm:flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 px-6 rounded-xl transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                Process & Encrypt Biometrics
+            </button>
+
+            <a href="{{ url_for('students.list_students') }}"
+               class="w-full sm:w-auto text-center px-6 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition">
+                Cancel
+            </a>
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+    document.getElementById('enrollmentForm').addEventListener('submit', function() {
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Extracting & Encrypting Biometrics...
+        `;
+    });
+</script>
+
+{% endblock %}
+
